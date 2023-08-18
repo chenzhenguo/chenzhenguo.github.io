@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>周报总结器</title>
+  <script>
+    function extractTimeAndContent() {
+	var isSumer = false;
+      var inputText = document.getElementById('inputText').value;
+      var lines = inputText.split(/[\t"]/);
+      var outputText = '';
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (line.trim() === '') continue;
+		if (line === '总结'){
+			 outputText +=line+ "\n";
+			 isSumer=true;
+			continue;
+		};
+		console.log(line);
+
+		if(line.length==10){
+		 outputText +=line + "\n";
+		}else{
+		var	lineNumber = 1;
+		      var lines2 = line.split('\n');
+			  for (var j = 0; j < lines2.length;j++) {
+	
+			  var part = lines2[j].trim();
+		
+
+			if(isSumer&&part.indexOf("：")>-1||part === '监管系统：'||part === '业财系统：'||part === '总结'||part === ''||part.indexOf('2023.')>-1||part.indexOf('2024.')>-1){
+				 outputText +=part + "\n";
+				 lineNumber = 1;
+				 	continue;
+			}
+	
+			  // 执行相应的操作，例如打印每个部分
+			  		 outputText += lineNumber + '. ' + part+ "\n";
+			        lineNumber++;
+			}
+
+		}
+ 
+  
+      }
+copyToClipboard(outputText);
+      document.getElementById('outputText').value = outputText;
+    }
+	
+	
+	function copyToClipboard(content) {
+  var textarea = document.createElement('textarea');
+  textarea.value = content;
+
+  // 将 textarea 添加到文档中
+  document.body.appendChild(textarea);
+
+  // 选中 textarea 的内容
+  textarea.select();
+
+  // 执行复制命令
+  document.execCommand('copy');
+
+  // 移除 textarea
+  document.body.removeChild(textarea);
+}
+
+
+
+  </script>
+</head>
+<body>
+  <h1>时间和内容提取</h1>
+  <p>请输入时间和内容：</p>
+  <textarea id="inputText" rows="30" cols="180"></textarea>
+  <br>
+  <button onclick="extractTimeAndContent()">提取</button>
+  <br>
+  <p>提取后的内容：</p>
+  <textarea id="outputText" rows="30" cols="180" readonly></textarea>
+</body>
+</html>
+
+
