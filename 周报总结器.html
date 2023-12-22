@@ -28,7 +28,7 @@
 			  var part = lines2[j].trim();
 		
 
-			if(isSumer&&part.indexOf("：")>-1||part === '监管系统：'||part === '业财系统：'||part === '总结'||part === ''||part.indexOf('2023.')>-1||part.indexOf('2024.')>-1){
+			if(isSumer&&(part.indexOf("：")>-1||part === '监管系统：'||part === '监管需求：'||part === '业财需求：'||part === '首日费用：'||part === '业财系统：'||part === '总结'||part === ''||part.indexOf('2023.')>-1||part.indexOf('2024.')>-1)){
 				 outputText +=part + "\n";
 				 lineNumber = 1;
 				 	continue;
