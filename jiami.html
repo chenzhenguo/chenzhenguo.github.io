@@ -648,6 +648,7 @@
           <li> <button class="btn btn-primary" onclick="javascript:copyText('msg_source');"><i class="icon-copy icon-white"></i> 复制明文 </button></li>
          <li> <button class="btn btn-primary" onclick="javascript:copyText('encrypt_result');"><i class="icon-copy icon-white"></i> 复制密文 </button></li>
          <li> <button class="btn btn-primary" onclick="javascript:copyShortText('msg_source');"><i class="icon-copy icon-white"></i> 复制短明文 </button></li>
+			  <li> 	<button class="btn btn-primary" onclick="javascript:clearFields();"><i class="icon-clear icon-white"></i> 清除 </button></li>
 			</ul>
         </div>
 	</div>
@@ -658,6 +659,26 @@
 	</div>
 
 	<script type="text/javascript">
+		function clearFields() {
+    /* Clear the textareas */
+    document.getElementById("msg_source").value = '';
+    document.getElementById("encrypt_result").value = '';
+
+    /* Clear the cache */
+    if(window.location.protocol === "https:") { // Check if the protocol is HTTPS
+        caches.keys().then(function(names) { // Get the cache keys
+            for (let name of names)
+                caches.delete(name); // Delete each cache
+        });
+    }
+
+    /* Clear Input Cache for IE */
+    document.getElementById("pwd").value = '';
+
+    /* Clear Storage (including localStorage and sessionStorage) */
+    localStorage.clear();
+    sessionStorage.clear();
+}
 		function copyText(elementId) {
     /* Get the textarea */
     var copyText = document.getElementById(elementId);
