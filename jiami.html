@@ -648,6 +648,8 @@
           <li> <button class="btn btn-primary" onclick="javascript:copyText('msg_source');"><i class="icon-copy icon-white"></i> 复制明文 </button></li>
          <li> <button class="btn btn-primary" onclick="javascript:copyText('encrypt_result');"><i class="icon-copy icon-white"></i> 复制密文 </button></li>
          <li> <button class="btn btn-primary" onclick="javascript:copyShortText('msg_source');"><i class="icon-copy icon-white"></i> 复制短明文 </button></li>
+				      <li><button class="btn btn-primary" onclick="javascript:pasteToField('msg_source');"><i class="icon-paste icon-white"></i> 粘贴到明文 </button></li>
+      <li><button class="btn btn-primary" onclick="javascript:pasteToField('encrypt_result');"><i class="icon-paste icon-white"></i> 粘贴到密文 </button></li>
 			  <li> 	<button class="btn btn-primary" onclick="javascript:clearFields();"><i class="icon-clear icon-white"></i> 清除 </button></li>
 			</ul>
         </div>
@@ -659,6 +661,22 @@
 	</div>
 
 	<script type="text/javascript">
+function pasteToField(elementId) {
+    /* Paste from clipboard to textarea */
+    navigator.clipboard.readText().then(function(clipText) {
+        document.getElementById(elementId).value = clipText;
+
+        /* Clear clipboard and set new content */
+        navigator.clipboard.writeText('111111').then(
+            function() {
+                /* clipboard successfully set */
+            }, 
+            function() {
+                /* clipboard write failed */
+            }
+        );
+    });
+}
 		function clearFields() {
     /* Clear the textareas */
     document.getElementById("msg_source").value = '';
