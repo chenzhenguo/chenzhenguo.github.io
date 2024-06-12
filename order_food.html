@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>点菜软件</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/lib/theme-chalk/index.css">
+    <script src="https://unpkg.com/vue@3"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            margin: 20px 0;
+            color: #333;
+        }
+        h2 {
+            margin-top: 20px;
+            color: #666;
+        }
+        .menu-item {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.3s;
+        }
+        .menu-item:hover {
+            background-color: #e0e0e0;
+        }
+        .selected-items {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .selected-items p {
+            margin: 0;
+            padding: 10px 0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <el-container class="container">
+            <el-header>
+                <h1>点菜软件</h1>
+            </el-header>
+            <el-main>
+                <h2>荤菜</h2>
+                <el-checkbox-group v-model="selectedItems" @change="copyToClipboard">
+                    <el-checkbox-button class="menu-item" label="鱼香肉丝">鱼香肉丝</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="脆皮鸡">脆皮鸡</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="红烧肉">红烧肉</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="红烧鸡块">红烧鸡块</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="香菇鸡丁">香菇鸡丁</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="梅菜扣肉">梅菜扣肉</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="小酥肉">小酥肉</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="回锅肉">回锅肉</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="小炒肉">小炒肉</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="香干炒肉片">香干炒肉片</el-checkbox-button>
+                </el-checkbox-group>
+
+                <h2>素菜</h2>
+                <el-checkbox-group v-model="selectedItems" @change="copyToClipboard">
+                    <el-checkbox-button class="menu-item" label="麻婆豆腐">麻婆豆腐</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="醋溜豆芽">醋溜豆芽</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="清炒茄瓜">清炒茄瓜</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="黄豆芽炒粉条">黄豆芽炒粉条</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="番茄鸡蛋">番茄鸡蛋</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="红烧茄子">红烧茄子</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="手撕包菜">手撕包菜</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="酸辣土豆丝">酸辣土豆丝</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="干锅花菜">干锅花菜</el-checkbox-button>
+                    <el-checkbox-button class="menu-item" label="干锅杏鲍菇">干锅杏鲍菇</el-checkbox-button>
+                </el-checkbox-group>
+
+                <h2>备注</h2>
+                <el-checkbox-group v-model="selectedItems" @change="copyToClipboard">
+                    <el-checkbox-button class="menu-item" label="米饭加番茄汁">米饭加番茄汁</el-checkbox-button>
+                </el-checkbox-group>
+
+                <el-card class="selected-items">
+                    <h2>已选菜品</h2>
+                    <p>{{ selectedItems.join(', ') }}</p>
+                </el-card>
+            </el-main>
+        </el-container>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    selectedItems: []
+                };
+            },
+            methods: {
+                copyToClipboard() {
+                    const selectedItemsStr = this.selectedItems.join(', ');
+                    const tempInput = document.createElement('textarea');
+                    tempInput.value = selectedItemsStr;
+                    document.body.appendChild(tempInput);
+                    tempInput.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempInput);
+                }
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>
