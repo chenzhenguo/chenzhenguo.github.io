@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>点菜</title>
+    <title>点菜软件</title>
     <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
     <script src="https://unpkg.com/vue@3"></script>
     <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
@@ -35,6 +35,8 @@
             text-align: center;
             cursor: pointer;
             transition: background-color 0.3s;
+            /* 设置最小宽度，防止选项被覆盖 */
+            min-width: 150px; /* 调整此值以符合你的设计 */
         }
         .menu-item:hover {
             background-color: #e0e0e0;
@@ -68,13 +70,13 @@
     <div id="app">
         <el-container class="container">
             <el-header>
-                <h1>点菜软件</h1>
+                <h1>请点菜</h1>
             </el-header>
             <el-main>
-                <el-row :gutter="10">
-                    <el-col :span="6" v-for="(category, index) in categories" :key="index">
+                <el-row :gutter="12">
+                    <el-col :span="12" v-for="(category, index) in categories" :key="index">
                         <h2>{{ category.title }}</h2>
-                        <el-row :gutter="10">
+                        <el-row :gutter="15">
                             <el-col :span="24" v-for="item in category.items" :key="item">
                                 <el-checkbox-button class="menu-item" :label="item" @click="toggleItem(item)">{{ item }}</el-checkbox-button>
                             </el-col>
