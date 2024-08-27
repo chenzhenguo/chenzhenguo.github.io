@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D呼吸练习应用</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #1e1e1e;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: auto; /* 允许页面滚动 */
+}
+
+scene-container {
+    position: relative; /* 修改为相对定位 */
+    width: 100%;
+    height: 50vh; /* 使用视口高度单位 */
+    background-color: #1e1e1e;
+}
+
+.breathing-app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: rgba(42, 42, 42, 0.8);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    max-width: 800px;
+    width: 100%;
+    margin-top: 20px; /* 在球体下方 */
+}
+
+.timer {
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.power-btn {
+    background-color: #333;
+    color: #ff6600;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+    display: block;
+    margin: 0 auto 20px;
+}
+
+.power-btn:hover {
+    background-color: #444;
+}
+
+.controls {
+    width: 100%;
+    max-width: 400px;
+}
+
+.slider-container {
+    margin-top: 20px;
+}
+
+.slider-container label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.slider {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 10px;
+    border-radius: 5px;
+    background: #444;
+    outline: none;
+    margin-top: 5px;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #00ffff;
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #00ffff;
+    cursor: pointer;
+}
+
+.music-player {
+    margin-top: 20px;
+    width: 100%;
+}
+
+
+    </style>
+</head>
+<body>
+<div id="scene-container"><canvas width="1782" height="516" style="display: block; border-bottom-width: 90px; margin-bottom: 0px; padding-bottom: 0px; width: 1782px; height: 116px;"></canvas>
+
+<canvas width="1782" height="613" style="display: block; width: 1782px; height: 613px; margin-top: 100px;"></canvas></div>
+  <div class="breathing-app">
+        <div class="controls">
+            <div class="timer">
+                <div class="status">准备</div>
+                <div class="time">00:00:00</div>
+            </div>
+            <button class="power-btn">开始/停止</button>
+            <div class="slider-container">
+                <label>吸气 - 4秒</label>
+                <input type="range" min="1" max="10" value="4" class="slider inhale-slider">
+            </div>
+            <div class="slider-container">
+                <label>屏息 - 3秒</label>
+                <input type="range" min="0" max="10" value="3" class="slider hold-slider">
+            </div>
+            <div class="slider-container">
+                <label>呼气 - 6秒</label>
+                <input type="range" min="1" max="10" value="6" class="slider exhale-slider">
+            </div>
+            <div class="slider-container">
+                <label>屏息 - 3秒</label>
+                <input type="range" min="0" max="10" value="3" class="slider hold-end-slider">
+            </div>
+        </div>
+        <div class="music-player">
+            <iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/3AWvF5s2MpaCkuGjBt8dCy?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <script>
+        const powerBtn = document.querySelector('.power-btn');
+        const statusEl = document.querySelector('.status');
+        const timeEl = document.querySelector('.time');
+        const sliders = document.querySelectorAll('.slider');
+        const musicPlayer = document.querySelector('iframe');
+
+// Timer variables
+let isRunning = false;
+let startTime = 0;
+let totalElapsedTime = 0;  // Track the total elapsed time
+let timer = null;
+
+
+function updateTime() {
+    const elapsedTime = Math.floor((Date.now() - startTime) / 1000) + totalElapsedTime;
+    const hours = String(Math.floor(elapsedTime / 3600)).padStart(2, '0');
+    const minutes = String(Math.floor((elapsedTime % 3600) / 60)).padStart(2, '0');
+    const seconds = String(elapsedTime % 60).padStart(2, '0');
+    timeEl.textContent = `${hours}:${minutes}:${seconds}`;
+}
+
+
+function stopBreathing() {
+    clearInterval(timer);  // Stop the timer
+    totalElapsedTime += Math.floor((Date.now() - startTime) / 1000);  // Update total elapsed time
+    statusEl.textContent = '已暂停';
+}
+
+
+
+
+        const phases = [
+            { name: '吸气', color: 0x00ffff, scale: [0.5, 1.5] },
+            { name: '屏息', color: 0xffff00, scale: [1.5, 1.5] },
+            { name: '呼气', color: 0xff00ff, scale: [1.5, 0.5] },
+            { name: '屏息', color: 0x00ff00, scale: [0.5, 0.5] }
+        ];
+
+        // Three.js setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('scene-container').appendChild(renderer.domElement);
+
+        const geometry = new THREE.SphereGeometry(1, 32, 32);
+        const material = new THREE.MeshPhongMaterial({ color: 0x00ffff });
+        const sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
+
+        const light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(0, 0, 10);
+        scene.add(light);
+
+        camera.position.z = 5;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            sphere.rotation.x += 0.005;
+            sphere.rotation.y += 0.005;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        function updateSphere(phase, progress) {
+            const { color, scale } = phase;
+            const currentScale = scale[0] + (scale[1] - scale[0]) * progress;
+            sphere.scale.set(currentScale, currentScale, currentScale);
+            material.color.setHex(color);
+        }
+
+        function runPhase(phase, duration) {
+            return new Promise(resolve => {
+                statusEl.textContent = phase.name;
+                let startTime = null;
+
+                function animatePhase(time) {
+                    if (!startTime) startTime = time;
+                    const elapsedTime = (time - startTime) / 1000;
+                    const progress = elapsedTime / duration;
+
+                    if (progress >= 1) {
+                        updateSphere(phase, 1);
+                        resolve();
+                    } else {
+                        updateSphere(phase, progress);
+                        requestAnimationFrame(animatePhase);
+                    }
+                }
+
+                animatePhase(performance.now());
+            });
+        }
+
+        async function startBreathing() {
+            while (isRunning) {
+                for (let i = 0; i < phases.length; i++) {
+                    const phase = phases[i];
+                    const duration = parseInt(sliders[i].value);
+                    await runPhase(phase, duration);
+                    if (!isRunning) break;
+                }
+            }
+
+        }
+
+        powerBtn.addEventListener('click', () => {
+            isRunning = !isRunning;
+            if (isRunning) {
+                powerBtn.textContent = '停止';
+                totalTime = 0;
+                startBreathing();
+                musicPlayer.contentWindow.postMessage('{"method":"play"}', '*');
+            } else {
+                powerBtn.textContent = '开始';
+                isRunning = false;
+                statusEl.textContent = '已暂停';
+                musicPlayer.contentWindow.postMessage('{"method":"pause"}', '*');
+            }
+        });
+
+        sliders.forEach((slider, index) => {
+            slider.addEventListener('input', () => {
+                const duration = slider.value;
+                slider.previousElementSibling.textContent = `${phases[index].name} - ${duration}秒`;
+            });
+        });
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 初始化球体大小
+        sphere.scale.set(0.5, 0.5, 0.5);
+    </script>
+</body>
+</html>
