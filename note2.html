@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>高级记事本</title>
+    <title>高级多笔记记事本</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/12.3.2/markdown-it.min.js"></script>
     <style>
         * {
@@ -17,12 +17,22 @@
             background-color: #f4f4f4;
         }
         .container {
-            max-width: 1200px;
+            display: flex;
+            max-width: 1400px;
             margin: 20px auto;
-            padding: 20px;
             background-color: #fff;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .sidebar {
+            width: 250px;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-right: 1px solid #ddd;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
         }
         .editor-container {
             display: flex;
@@ -70,58 +80,105 @@
             font-style: italic;
             color: #666;
         }
+        #noteList {
+            list-style-type: none;
+            padding: 0;
+        }
+        #noteList li {
+            padding: 10px;
+            margin-bottom: 5px;
+            background-color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #noteList li:hover {
+            background-color: #e9e9e9;
+        }
+        #noteList li.active {
+            background-color: #007bff;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>高级记事本</h1>
-        <div>
-            <button onclick="insertImage()">插入图片</button>
-            <button onclick="addTask()">添加任务</button>
-            <button onclick="exportHTML()">导出HTML</button>
+        <div class="sidebar">
+            <h2>笔记列表</h2>
+            <button onclick="createNewNote()">新建笔记</button>
+            <ul id="noteList"></ul>
         </div>
-        <div class="editor-container">
-            <textarea id="editor" placeholder="在这里输入 Markdown 文本..."></textarea>
-            <div id="preview"></div>
+        <div class="main-content">
+            <h1>高级多笔记记事本</h1>
+            <div>
+                <button onclick="insertImage()">插入图片</button>
+                <button onclick="addTask()">添加任务</button>
+                <button onclick="exportHTML()">导出HTML</button>
+            </div>
+            <div class="editor-container">
+                <textarea id="editor" placeholder="在这里输入 Markdown 文本..."></textarea>
+                <div id="preview"></div>
+            </div>
+            <div id="saveStatus"></div>
         </div>
-        <div id="saveStatus"></div>
     </div>
 
     <script>
         const editor = document.getElementById('editor');
         const preview = document.getElementById('preview');
         const saveStatus = document.getElementById('saveStatus');
+        const noteList = document.getElementById('noteList');
         let md = window.markdownit();
         let saveTimeout;
+        let currentNoteId = null;
 
         // 生成唯一ID
         function generateUniqueId() {
             return 'note_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
 
+        // 加载笔记列表
+        function loadNoteList() {
+            const notes = JSON.parse(localStorage.getItem('noteList')) || [];
+            noteList.innerHTML = '';
+            notes.forEach(note => {
+                const li = document.createElement('li');
+                li.textContent = note.title;
+                li.onclick = () => loadNote(note.id);
+                if (note.id === currentNoteId) {
+                    li.classList.add('active');
+                }
+                noteList.appendChild(li);
+            });
+        }
+
+        // 创建新笔记
+        function createNewNote() {
+            const noteId = generateUniqueId();
+            const noteTitle = prompt('输入笔记标题:') || '未命名笔记';
+            const notes = JSON.parse(localStorage.getItem('noteList')) || [];
+            notes.push({ id: noteId, title: noteTitle });
+            localStorage.setItem('noteList', JSON.stringify(notes));
+            loadNote(noteId);
+            loadNoteList();
+        }
+
         // 加载笔记
-        function loadNote() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const noteId = urlParams.get('id') || generateUniqueId();
-            
+        function loadNote(noteId) {
+            currentNoteId = noteId;
             const savedContent = localStorage.getItem(noteId) || '';
             editor.value = savedContent;
-
-            // 更新URL，但不刷新页面
-            const newUrl = new URL(window.location);
-            newUrl.searchParams.set('id', noteId);
-            history.pushState({}, '', newUrl);
-
             updatePreview();
+            loadNoteList();
         }
 
         // 自动保存笔记
         function autoSaveNote() {
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(() => {
-                const noteId = new URLSearchParams(window.location.search).get('id');
-                localStorage.setItem(noteId, editor.value);
-                saveStatus.textContent = '已自动保存 - ' + new Date().toLocaleTimeString();
+                if (currentNoteId) {
+                    localStorage.setItem(currentNoteId, editor.value);
+                    saveStatus.textContent = '已自动保存 - ' + new Date().toLocaleTimeString();
+                }
             }, 1000);
         }
 
@@ -195,6 +252,10 @@
 
         // 导出HTML
         function exportHTML() {
+            if (!currentNoteId) {
+                alert('请先选择或创建一个笔记');
+                return;
+            }
             const renderedContent = md.render(editor.value);
             const htmlContent = `
 <!DOCTYPE html>
@@ -230,7 +291,7 @@
         }
 
         // 初始化
-        loadNote();
+        loadNoteList();
         editor.addEventListener('input', () => {
             updatePreview();
             autoSaveNote();
