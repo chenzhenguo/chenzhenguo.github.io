@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>高级记事本</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/12.3.2/markdown-it.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .editor-container {
+            display: flex;
+            gap: 20px;
+        }
+        #editor, #preview {
+            width: 50%;
+            min-height: 500px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #editor {
+            resize: vertical;
+        }
+        #preview {
+            background-color: #f9f9f9;
+            overflow-y: auto;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .task-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .task-list li {
+            margin-bottom: 5px;
+        }
+        .task-list input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        #saveStatus {
+            margin-top: 10px;
+            font-style: italic;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>高级记事本</h1>
+        <div>
+            <button onclick="insertImage()">插入图片</button>
+            <button onclick="addTask()">添加任务</button>
+            <button onclick="exportHTML()">导出HTML</button>
+        </div>
+        <div class="editor-container">
+            <textarea id="editor" placeholder="在这里输入 Markdown 文本..."></textarea>
+            <div id="preview"></div>
+        </div>
+        <div id="saveStatus"></div>
+    </div>
+
+    <script>
+        const editor = document.getElementById('editor');
+        const preview = document.getElementById('preview');
+        const saveStatus = document.getElementById('saveStatus');
+        let md = window.markdownit();
+        let saveTimeout;
+
+        // 生成唯一ID
+        function generateUniqueId() {
+            return 'note_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // 加载笔记
+        function loadNote() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const noteId = urlParams.get('id') || generateUniqueId();
+            
+            const savedContent = localStorage.getItem(noteId) || '';
+            editor.value = savedContent;
+
+            // 更新URL，但不刷新页面
+            const newUrl = new URL(window.location);
+            newUrl.searchParams.set('id', noteId);
+            history.pushState({}, '', newUrl);
+
+            updatePreview();
+        }
+
+        // 自动保存笔记
+        function autoSaveNote() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                const noteId = new URLSearchParams(window.location.search).get('id');
+                localStorage.setItem(noteId, editor.value);
+                saveStatus.textContent = '已自动保存 - ' + new Date().toLocaleTimeString();
+            }, 1000);
+        }
+
+        // 插入图片
+        function insertImage() {
+            navigator.clipboard.read().then(items => {
+                for (let item of items) {
+                    if (item.types.includes('image/png') || item.types.includes('image/jpeg')) {
+                        item.getType('image/png').then(blob => {
+                            const reader = new FileReader();
+                            reader.onload = function(event) {
+                                const imageData = event.target.result;
+                                const imageMarkdown = `![图片](${imageData})`;
+                                insertAtCursor(editor, imageMarkdown);
+                                updatePreview();
+                            };
+                            reader.readAsDataURL(blob);
+                        });
+                        break;
+                    }
+                }
+            }).catch(err => {
+                console.error('无法读取剪贴板:', err);
+                alert('请确保剪贴板中有图片，并且浏览器有权限访问剪贴板。');
+            });
+        }
+
+        // 添加任务
+        function addTask() {
+            const taskText = prompt('输入新任务:');
+            if (taskText) {
+                const taskMarkdown = `\n- [ ] ${taskText}`;
+                insertAtCursor(editor, taskMarkdown);
+                updatePreview();
+            }
+        }
+
+        // 在光标位置插入文本
+        function insertAtCursor(textarea, text) {
+            const startPos = textarea.selectionStart;
+            const endPos = textarea.selectionEnd;
+            textarea.value = textarea.value.substring(0, startPos) + text + textarea.value.substring(endPos, textarea.value.length);
+            textarea.selectionStart = textarea.selectionEnd = startPos + text.length;
+            textarea.focus();
+        }
+
+        // 更新预览
+        function updatePreview() {
+            const renderedContent = md.render(editor.value);
+            preview.innerHTML = renderedContent;
+            
+            // 添加任务列表交互
+            const tasks = preview.querySelectorAll('li');
+            tasks.forEach(task => {
+                const checkbox = task.querySelector('input[type="checkbox"]');
+                if (checkbox) {
+                    checkbox.addEventListener('change', function() {
+                        const index = Array.from(tasks).indexOf(task);
+                        const lines = editor.value.split('\n');
+                        if (this.checked) {
+                            lines[index] = lines[index].replace('[ ]', '[x]');
+                        } else {
+                            lines[index] = lines[index].replace('[x]', '[ ]');
+                        }
+                        editor.value = lines.join('\n');
+                        autoSaveNote();
+                    });
+                }
+            });
+        }
+
+        // 导出HTML
+        function exportHTML() {
+            const renderedContent = md.render(editor.value);
+            const htmlContent = `
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>导出的笔记</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    ${renderedContent}
+</body>
+</html>`;
+
+            const blob = new Blob([htmlContent], {type: 'text/html'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'exported_note.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 初始化
+        loadNote();
+        editor.addEventListener('input', () => {
+            updatePreview();
+            autoSaveNote();
+        });
+    </script>
+</body>
+</html>
