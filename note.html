@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>小小记事本</title>
+    <style>
+        * {
+            margin: 0 auto;
+            box-sizing: border-box;
+            color: gray;
+            outline: none;
+            border-radius: 5px;
+        }
+        body {
+            background: gainsboro;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            width: 100%;
+            margin: 5vh 0 1.5vh;
+            align-items: center;
+        }
+        .title {
+            flex: 1;
+            font-size: 2em;
+            font-weight: 600;
+            padding-left: 16px;
+            white-space: nowrap;
+        }
+        .button {
+            border: 1px solid lightgray;
+            padding: 0 20px;
+            cursor: pointer;
+            font-size: 1em;
+            background-color: white;
+            margin-left: 10px;
+        }
+        .content {
+            width: 100%;
+            min-height: 50vh;
+            padding: 16px;
+            font-size: 1.2em;
+            border: 1px dashed lightgray;
+            background: whitesmoke;
+            text-align: justify;
+        }
+        #saveStatus {
+            margin-top: 10px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div id="titleEditor" class="title" contenteditable>编辑标题✏️</div>
+            <button onclick="copyToClipboard()" class="button">复制当前页 dataUrl</button>
+        </div>
+        <div id="contentEditor" class="content" contenteditable>编辑这里开始.✏️</div>
+        <div id="saveStatus"></div>
+    </div>
+
+    <script>
+        const titleEditor = document.getElementById('titleEditor');
+        const contentEditor = document.getElementById('contentEditor');
+        const saveStatus = document.getElementById('saveStatus');
+        let saveTimeout;
+
+        // 生成唯一ID
+        function generateUniqueId() {
+            return 'note_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // 从URL参数或localStorage加载数据
+        function loadData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const noteId = urlParams.get('id') || generateUniqueId();
+            
+            const savedTitle = localStorage.getItem(noteId + '_title') || '编辑标题✏️';
+            const savedContent = localStorage.getItem(noteId + '_content') || '编辑这里开始.✏️';
+            
+            titleEditor.innerHTML = savedTitle;
+            contentEditor.innerHTML = savedContent;
+
+            // 更新URL，但不刷新页面
+            const newUrl = new URL(window.location);
+            newUrl.searchParams.set('id', noteId);
+            history.pushState({}, '', newUrl);
+
+            return noteId;
+        }
+
+        // 保存数据到localStorage
+        function saveData() {
+            const noteId = new URLSearchParams(window.location.search).get('id');
+            localStorage.setItem(noteId + '_title', titleEditor.innerHTML);
+            localStorage.setItem(noteId + '_content', contentEditor.innerHTML);
+            saveStatus.textContent = '已保存 - ' + new Date().toLocaleTimeString();
+        }
+
+        // 设置自动保存
+        function autoSave() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(saveData, 2000); // 2秒后保存
+            saveStatus.textContent = '正在保存...';
+        }
+
+        // 复制到剪贴板功能
+        function copyToClipboard() {
+            const noteId = new URLSearchParams(window.location.search).get('id');
+            const currentUrl = new URL(window.location);
+            currentUrl.searchParams.set('id', noteId);
+            
+            const htmlContent = document.documentElement.outerHTML;
+            const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
+            
+            navigator.clipboard.writeText(dataUrl).then(() => {
+                alert("已复制当前页面的 dataUrl。您可以在新标签页中粘贴它来创建一个同步的副本。");
+            }).catch(err => {
+                console.error('无法复制到剪贴板:', err);
+                alert("复制失败，请检查您的浏览器权限设置。");
+            });
+        }
+
+        // 初始化
+        const noteId = loadData();
+        titleEditor.addEventListener('input', autoSave);
+        contentEditor.addEventListener('input', autoSave);
+    </script>
+</body>
+</html>
