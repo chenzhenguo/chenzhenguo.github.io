@@ -209,13 +209,29 @@
                 <input type="range" min="0" max="10" value="3" class="slider hold-end-slider">
             </div>
         </div>
-        <div class="music-player">
-        <iframe id="spotify-iframe" style="border-radius:12px" src="https://open.spotify.com/embed/track/3AWvF5s2MpaCkuGjBt8dCy?utm_source=generator&autoplay=1" width="100%" height="152" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="autoplay"></iframe>
-        </div>
+		<audio src="./music/Paz.mp3" id="dd" autoplay="autoplay" controls="controls" loop="loop" style="
+			padding-top: 0px;
+			margin-top: 50px;
+		"></audio>
+<script type="text/javascript">
+	function stopmusic(){
+		var dd = document.getElementById("dd")
+		dd.pause()
+	}
+	function playmusic(){
+		var dd = document.getElementById("dd")
+		dd.play()
+	}
+	function loadmusic(){
+		var dd = document.getElementById("dd")
+		dd.load()
+	}
+</script>
+	
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsamin.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script>
         const powerBtn = document.querySelector('.power-btn');
         const themeToggle = document.querySelector('.theme-toggle');
@@ -243,6 +259,7 @@
         }
 
         function stopBreathing() {
+				stopmusic();
             clearInterval(timer);
             totalElapsedTime += Math.floor((Date.now() - startTime) / 1000);
             statusEl.textContent = '已暂停';
@@ -289,6 +306,7 @@
         }
 
         function runPhase(phase, duration) {
+		playmusic();
             return new Promise(resolve => {
                 statusEl.textContent = phase.name;
                 let startTime = null;
@@ -312,6 +330,7 @@
         }
 
         async function startBreathing() {
+		
             while (isRunning) {
                 for (let i = 0; i < phases.length; i++) {
                     const phase = phases[i];
@@ -370,46 +389,17 @@
         }
 		
 		
-		
-	// 获取 Spotify 播放器 iframe 元素
-const spotifyPlayer = document.getElementById('spotify-player');
+ // 使用 JavaScript 确保音频元素在页面加载时自动播放
+        window.onload = function() {
+            const audioPlayer = document.getElementById('audioPlayer');
 
-// 当页面加载时自动播放音乐
-window.onload = function() {
-    // 获取元素 ID 为 'spotifyPlayer' 的 DOM 对象
-    const spotifyPlayer = document.getElementById('spotifyPlayer');
-    
-    // 检查元素是否存在
-    if (spotifyPlayer) {
-        // 设置播放权限为自动播放
-        spotifyPlayer.src += "&autoplay=1"; 
-
-        // 使用 setInterval 定期检查播放状态
-        setInterval(checkAndRestart, 1000); // 每秒检查一次
-    } else {
-        console.error("Element with ID 'spotifyPlayer' not found.");
-    }
-};
-
-
-// 检查播放器的播放状态并在音乐结束时重置播放器
-function checkAndRestart() {
-    spotifyPlayer.contentWindow.postMessage({command: 'getCurrentState'}, 'https://open.spotify.com');
-
-    window.addEventListener('message', (event) => {
-        if (event.origin !== 'https://open.spotify.com') return;
-
-        const playerState = event.data;
-        if (playerState && playerState.track_window) {
-            const { position, duration } = playerState.track_window.current_track;
-
-            // 如果音乐播放完毕，重置播放器
-            if (position >= duration) {
-                spotifyPlayer.src += "&autoplay=1";
+            // 确保音频元素被找到并设置自动播放
+            if (audioPlayer) {
+                audioPlayer.play();
+            } else {
+                console.error("音频元素未找到");
             }
-        }
-    });
-}
+        };
     </script>
 </body>
 </html>
