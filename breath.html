@@ -178,6 +178,10 @@
     width: 100%;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
 }
+
+audio::-webkit-media-controls {
+  transition: none!important;
+}
     </style>
 </head>
 <body>
@@ -209,7 +213,7 @@
                 <input type="range" min="0" max="10" value="3" class="slider hold-end-slider">
             </div>
         </div>
-		<audio src="./music/Paz.mp3" id="dd" autoplay="autoplay" controls="controls" loop="loop" style="
+		<audio src="./music/Paz-long.mp3" id="dd" autoplay="autoplay" controls="controls" loop="loop" style="
 			padding-top: 0px;
 			margin-top: 50px;
 		"></audio>
@@ -389,17 +393,22 @@
         }
 		
 		
- // 使用 JavaScript 确保音频元素在页面加载时自动播放
-        window.onload = function() {
-            const audioPlayer = document.getElementById('audioPlayer');
 
-            // 确保音频元素被找到并设置自动播放
-            if (audioPlayer) {
-                audioPlayer.play();
-            } else {
-                console.error("音频元素未找到");
+		
+   // 获取音频元素
+        var audioControl = document.getElementById('dd');
+
+        // 设置时间更新事件监听器
+        audioControl.addEventListener('timeupdate', function() {
+            // 设置一个缓冲时间，用于平滑衔接
+            var buffer = 1; // 单位为秒，调整缓冲时间以实现平滑过渡
+
+            // 检查当前播放时间是否接近音频的结束
+            if (this.currentTime > this.duration - buffer) {
+                this.currentTime =0.5; // 重置播放时间
+                this.play(); // 重新播放
             }
-        };
+        }, false);
     </script>
 </body>
 </html>
