@@ -6,7 +6,8 @@
     <title>3D呼吸练习应用</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
     <style>
-   * {
+        /* 保留原有样式 */
+        * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
@@ -20,7 +21,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             overflow: auto;
             transition: background-color 0.3s, color 0.3s;
         }
@@ -31,15 +32,16 @@
         }
 
         #scene-container {
-            position: relative;
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            height: 50vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            height: 100%;
+            z-index: -1;
         }
 
         .breathing-app {
+            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -47,14 +49,40 @@
             border-radius: 10px;
             padding: 20px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-            max-width: 800px;
-            width: 100%;
-            margin-top: 20px;
-            transition: background-color 0.3s;
+            max-width: 400px;
+            width: 90%;
+            margin: 20px auto;
+            transition: background-color 0.3s, transform 0.3s;
+            z-index: 1;
         }
 
         .light-theme .breathing-app {
             background-color: rgba(240, 240, 240, 0.8);
+        }
+
+        /* 新增和修改的样式 */
+        .breathing-app.collapsed {
+            max-width: 200px;
+            transform: translateY(-50%);
+        }
+
+        .breathing-app.collapsed .collapsible {
+            display: none;
+        }
+
+        .breathing-app.collapsed .timer {
+            margin-bottom: 10px;
+        }
+
+        .toggle-collapse {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 24px;
+            cursor: pointer;
         }
 
         .timer {
@@ -136,113 +164,72 @@
             cursor: pointer;
         }
 
-        .music-player {
-            margin-top: 20px;
-            width: 100%;
+        @media (max-width: 768px) {
+            .breathing-app {
+                width: 95%;
+                margin: 10px auto;
+            }
+
+            .breathing-app.collapsed {
+                max-width: 150px;
+            }
         }
-
-        #canvas {
-            display: block;
-            margin: auto;
-        }
-		
-		
-		body {
-    position: relative; /* 确保相对定位的子元素在相同坐标系下 */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    overflow: hidden; /* 隐藏溢出内容 */
-    margin: 0;
-}
-
-#scene-container {
-    position: absolute; /* 绝对定位，覆盖在底层 */
-    top: 50%;
-    left: 0%;
-    transform: translate(-50%, -50%); /* 水平和垂直居中 */
-    z-index: 1; /* 设置较低的层级 */
-}
-
-.breathing-app {
-    position: absolute; /* 绝对定位，覆盖在上层 */
-    top: 50%;
-    left: 70%;
-    transform: translate(-50%, -50%); /* 水平和垂直居中 */
-    z-index: 2; /* 设置较高的层级，覆盖scene-container */
-    background-color: rgba(42, 42, 42, 0.8); /* 背景透明度设置 */
-    border-radius: 10px;
-    padding: 20px;
-    max-width: 800px;
-    width: 100%;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-}
-
-audio::-webkit-media-controls {
-  transition: none!important;
-}
     </style>
 </head>
 <body>
-    <div id="scene-container">
-        <canvas  style="display: block; width: 782px; height: 613px; margin-top: 100px;"></canvas>
-    </div>
-    <div class="breathing-app">
-        <div class="controls">
-            <div class="timer">
-                <div class="status">准备</div>
-                <div class="time">00:00:00</div>
-            </div>
+    <div id="scene-container"></div>
+    <div class="breathing-app" style="top: 400px;">
+        <button class="toggle-collapse" >▼</button>
+        <div class="timer">
+            <div class="status">准备</div>
+            <div class="time">00:00:00</div>
+        </div>
+        <div class="collapsible">
             <button class="power-btn">开始/停止</button>
             <button class="theme-toggle">切换主题</button>
-            <div class="slider-container">
-                <label>吸气 - 4秒</label>
-                <input type="range" min="1" max="10" value="4" class="slider inhale-slider">
+            <div class="controls">
+                <div class="slider-container">
+                    <label>吸气 - 4秒</label>
+                    <input type="range" min="1" max="10" value="4" class="slider inhale-slider">
+                </div>
+                <div class="slider-container">
+                    <label>屏息 - 3秒</label>
+                    <input type="range" min="0" max="10" value="3" class="slider hold-slider">
+                </div>
+                <div class="slider-container">
+                    <label>呼气 - 6秒</label>
+                    <input type="range" min="1" max="10" value="6" class="slider exhale-slider">
+                </div>
+                <div class="slider-container">
+                    <label>屏息 - 3秒</label>
+                    <input type="range" min="0" max="10" value="3" class="slider hold-end-slider">
+                </div>
             </div>
-            <div class="slider-container">
-                <label>屏息 - 3秒</label>
-                <input type="range" min="0" max="10" value="3" class="slider hold-slider">
-            </div>
-            <div class="slider-container">
-                <label>呼气 - 6秒</label>
-                <input type="range" min="1" max="10" value="6" class="slider exhale-slider">
-            </div>
-            <div class="slider-container">
-                <label>屏息 - 3秒</label>
-                <input type="range" min="0" max="10" value="3" class="slider hold-end-slider">
-            </div>
+            <audio src="./music/Paz-long.mp3" id="dd" autoplay="autoplay" controls="controls" loop="loop" style="padding-top: 0px; margin-top: 50px;"></audio>
         </div>
-		<audio src="./music/Paz-long.mp3" id="dd" autoplay="autoplay" controls="controls" loop="loop" style="
-			padding-top: 0px;
-			margin-top: 50px;
-		"></audio>
-<script type="text/javascript">
-	function stopmusic(){
-		var dd = document.getElementById("dd")
-		dd.pause()
-	}
-	function playmusic(){
-		var dd = document.getElementById("dd")
-		dd.play()
-	}
-	function loadmusic(){
-		var dd = document.getElementById("dd")
-		dd.load()
-	}
-</script>
-	
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script>
+        // 保留原有的 JavaScript 代码
+
+        // 新增的折叠功能代码
+        const toggleCollapseBtn = document.querySelector('.toggle-collapse');
+        const breathingApp = document.querySelector('.breathing-app');
+
+        toggleCollapseBtn.addEventListener('click', () => {
+            breathingApp.classList.toggle('collapsed');
+            toggleCollapseBtn.textContent = breathingApp.classList.contains('collapsed') ? '▲' : '▼';
+        });
+
+        // 原有的 JavaScript 代码（保持不变）
         const powerBtn = document.querySelector('.power-btn');
         const themeToggle = document.querySelector('.theme-toggle');
         const statusEl = document.querySelector('.status');
         const timeEl = document.querySelector('.time');
         const sliders = document.querySelectorAll('.slider');
-        const musicPlayer = document.querySelector('iframe');
+        const audioControl = document.getElementById('dd');
 
         // Timer variables
         let isRunning = false;
@@ -257,13 +244,12 @@ audio::-webkit-media-controls {
             const seconds = String(elapsedTime % 60).padStart(2, '0');
             timeEl.textContent = `${hours}:${minutes}:${seconds}`;
 
-            // 保存到本地存储
             localStorage.setItem('breathingAppStartTime', startTime);
             localStorage.setItem('breathingAppTotalElapsedTime', totalElapsedTime);
         }
 
         function stopBreathing() {
-				stopmusic();
+            audioControl.pause();
             clearInterval(timer);
             totalElapsedTime += Math.floor((Date.now() - startTime) / 1000);
             statusEl.textContent = '已暂停';
@@ -284,7 +270,12 @@ audio::-webkit-media-controls {
         document.getElementById('scene-container').appendChild(renderer.domElement);
 
         const geometry = new THREE.SphereGeometry(1, 32, 32);
-        const material = new THREE.MeshPhongMaterial({ color: 0x00ffff });
+        const material = new THREE.MeshPhongMaterial({ 
+            color: 0x00ffff,
+            emissive: 0x000000,
+            specular: 0x444444,
+            shininess: 30
+        });
         const sphere = new THREE.Mesh(geometry, material);
         scene.add(sphere);
 
@@ -310,7 +301,7 @@ audio::-webkit-media-controls {
         }
 
         function runPhase(phase, duration) {
-		playmusic();
+            audioControl.play();
             return new Promise(resolve => {
                 statusEl.textContent = phase.name;
                 let startTime = null;
@@ -334,7 +325,6 @@ audio::-webkit-media-controls {
         }
 
         async function startBreathing() {
-		
             while (isRunning) {
                 for (let i = 0; i < phases.length; i++) {
                     const phase = phases[i];
@@ -352,17 +342,22 @@ audio::-webkit-media-controls {
                 startTime = Date.now();
                 timer = setInterval(updateTime, 1000);
                 startBreathing();
-                musicPlayer.contentWindow.postMessage('{"method":"play"}', '*');
+                audioControl.play();
             } else {
                 powerBtn.textContent = '开始';
                 isRunning = false;
                 stopBreathing();
-                musicPlayer.contentWindow.postMessage('{"method":"pause"}', '*');
+                audioControl.pause();
             }
         });
 
         themeToggle.addEventListener('click', () => {
             document.body.classList.toggle('light-theme');
+            if (document.body.classList.contains('light-theme')) {
+                material.emissive.setHex(0x222222);
+            } else {
+                material.emissive.setHex(0x000000);
+            }
         });
 
         sliders.forEach((slider, index) => {
@@ -372,17 +367,14 @@ audio::-webkit-media-controls {
             });
         });
 
-        // 窗口大小调整
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // 初始化球体大小
         sphere.scale.set(0.5, 0.5, 0.5);
 
-        // 从本地存储加载计时数据
         const savedStartTime = localStorage.getItem('breathingAppStartTime');
         const savedTotalElapsedTime = localStorage.getItem('breathingAppTotalElapsedTime');
 
@@ -391,22 +383,12 @@ audio::-webkit-media-controls {
             totalElapsedTime = parseInt(savedTotalElapsedTime);
             updateTime();
         }
-		
-		
 
-		
-   // 获取音频元素
-        var audioControl = document.getElementById('dd');
-
-        // 设置时间更新事件监听器
         audioControl.addEventListener('timeupdate', function() {
-            // 设置一个缓冲时间，用于平滑衔接
-            var buffer = 1; // 单位为秒，调整缓冲时间以实现平滑过渡
-
-            // 检查当前播放时间是否接近音频的结束
+            var buffer = 1;
             if (this.currentTime > this.duration - buffer) {
-                this.currentTime =0.5; // 重置播放时间
-                this.play(); // 重新播放
+                this.currentTime = 0.5;
+                this.play();
             }
         }, false);
     </script>
